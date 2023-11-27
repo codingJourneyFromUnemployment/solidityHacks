@@ -54,6 +54,8 @@ keccak2566("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266Ethereummysecret") = '0xf9
 11. But Bob's revealSolution("Ethereum", "mysecret") passes the hash check and gets the reward of 10 ether.
 */
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 contract SecuredFindThisHash {
   //struct is used to store the commit details
   struct Commit {
@@ -100,5 +102,52 @@ contract SecuredFindThisHash {
     commit.revealed = false;
   }
 
-  
+  /*
+    Function to get the commit details. It returns a tuple of (solutionHash, commitTime, revalStatus);
+    Users can get solution only if the game is active and they committed a solutionHash
+  */
+
+  function getMySolution() public view gameActive returns (bytes32, uint, bool) {
+    Commit storage commit = commits[msg.sender];
+    require(commit.commitTime != 0, "Not committed yet");
+    return (commit.solutionHash, commit.commitTime, commit.revealed);
+  }
+
+  /*
+    Function to reveal the commit and get the reward.
+    Users can get reveal solution only if the game is active and they have committed a solutionHash before this block and not revealed yet.
+    It generates an keccak256(msg.sender + solution + secret) and checks it with the previously committed hash.
+    Front runners will not be able to pass this check since the msg.sender is different.
+    Then the actual solution is checked using keccak256(solution), if the solution matches, the winner is declared.
+    The game is ended and the reward amount is sent to the winner.
+  */
+  function revealSolution(
+		string memory _solution,
+		string memory _secret
+	) public gameActive {
+		Commit storage commit = commits[msg.sender];
+		require(commit.commitTime != 0, "Not committed yet");
+		require(commit.commitTime < block.timestamp, "can not reveal in the same block as commit");
+		require(!commit.revealed, "Already revealed");
+
+		bytes32 solutionHash = keccak256(
+			abi.encodePacked(
+				Strings.toHexString(msg.sender),
+				_solution,
+				_secret
+			)
+		);
+
+		require(solutionHash == commit.solutionHash, "Hash doesn't match");
+
+		winner = msg.sender;
+		ended = true;
+
+		(bool sent, ) = payable(msg.sender).call{value: reward}("");
+		if(!sent) {
+			winner = address(0);	
+			ended = false;
+			revert("Failed to send Ether");
+		}
+	}
 }
