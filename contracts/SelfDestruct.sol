@@ -43,7 +43,7 @@ contract EtherGame {
 contract Attack {
   EtherGame etherGame;
 
-  constructor(EtherGame _etherGame) {
+  constructor(EtherGame _etherGame) payable {
     etherGame = EtherGame(_etherGame);
   }
 
